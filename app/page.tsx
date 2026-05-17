@@ -78,6 +78,12 @@ export default function LandingPage() {
   const copyToClipboard = () => {
     if (!hasUsername) return;
 
+    fetch('/api/track-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: trimmedUsername }),
+    }).catch(console.error);
+
     navigator.clipboard.writeText(markdown);
     setCopied(true);
     setTimeout(() => {
@@ -214,7 +220,15 @@ export default function LandingPage() {
                   href={hasUsername ? `/dashboard/${trimmedUsername}` : '/'}
                   aria-disabled={!hasUsername}
                   onClick={(e) => {
-                    if (!hasUsername) e.preventDefault();
+                    if (!hasUsername) {
+                      e.preventDefault();
+                    } else {
+                      fetch('/api/track-user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: trimmedUsername }),
+                      }).catch(console.error);
+                    }
                   }}
                   className={`relative flex min-w-[160px] items-center justify-center gap-2 overflow-hidden rounded-xl border px-6 py-3.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
                     hasUsername
@@ -456,7 +470,16 @@ function SuccessGuide({
             monolith&apos;s colour palette.
           </p>
           <div className="mt-8 flex justify-center border-t border-white/5 pt-6">
-            <Link href={`/dashboard/${username}`}>
+            <Link
+              href={`/dashboard/${username}`}
+              onClick={() => {
+                fetch('/api/track-user', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ username }),
+                }).catch(console.error);
+              }}
+            >
               <button className="bg-white text-black hover:bg-zinc-100 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]">
                 Watch Your Dashboard
               </button>
