@@ -249,6 +249,16 @@ describe('GET /api/streak', () => {
       expect(response.status).toBe(200);
     });
 
+    it('passes correct from/to range when ?year=2023 is provided', async () => {
+      await GET(makeRequest({ user: 'octocat', year: '2023' }));
+
+      expect(fetchGitHubContributions).toHaveBeenCalledWith('octocat', {
+        bypassCache: false,
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z',
+      });
+    });
+
     it('functions normally when the year parameter is missing', async () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
 
@@ -297,6 +307,15 @@ describe('GET /api/streak', () => {
       expect(response.status).toBe(200);
     });
 
+    it('returns auto-theme SVG markup with dark-mode CSS variables when theme=auto', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', theme: 'auto' }));
+      const body = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(body).toContain('prefers-color-scheme: dark');
+      expect(body).toContain('--cp-bg');
+    });
+
     it('falls back to the dark theme without crashing when an unknown theme is given', async () => {
       const response = await GET(makeRequest({ user: 'octocat', theme: 'does-not-exist' }));
       const body = await response.text();
@@ -319,6 +338,19 @@ describe('GET /api/streak', () => {
       const body = await response.text();
 
       expect(body).toContain('#00ff00');
+    });
+
+    it('embeds a custom text color in the SVG when text is provided', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', text: 'ff0000' }));
+      const body = await response.text();
+
+      expect(body).toContain('#ff0000');
+    });
+
+    it('does not crash when an invalid text color is provided', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', text: 'notacolor' }));
+
+      expect(response.status).toBe(200);
     });
   });
 
@@ -430,6 +462,34 @@ describe('GET /api/streak', () => {
       const body = await response.text();
       // It should generate the default streak SVG and have "CURRENT_STREAK"
       expect(body).toContain('CURRENT_STREAK');
+    });
+  });
+
+  describe('theme=random cache header', () => {
+    it('returns no-cache header when ?theme=random is given', async () => {
+      const response = await GET(makeRequest({ user: 'octocat', theme: 'random' }));
+
+      expect(response.headers.get('Cache-Control')).toBe('no-cache, no-store, must-revalidate');
+    });
+  });
+
+  describe('Ghost City Mode (route integration)', () => {
+    it('returns ghost city SVG when user has 0 total contributions', async () => {
+      const emptyCalendar: ContributionCalendar = {
+        totalContributions: 0,
+        weeks: [
+          {
+            contributionDays: [{ contributionCount: 0, date: '2024-06-10' }],
+          },
+        ],
+      };
+
+      vi.mocked(fetchGitHubContributions).mockResolvedValue(emptyCalendar);
+      const response = await GET(makeRequest({ user: 'octocat' }));
+      const body = await response.text();
+
+      expect(body).toContain('stroke-width="0.5"');
+      expect(body).toContain('stroke-opacity="0.3"');
     });
   });
 });

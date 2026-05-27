@@ -294,13 +294,7 @@ function generateAutoThemeSVG(
   fill="none"
   role="img"
 >
-  <title>CommitPulse Stats for ${safeUser} </title>
-  <desc>
-    ${params.user || 'This user'} has ${stats.totalContributions} total contributions and a longest streak of ${stats.longestStreak} days.
-  </desc>
-  <defs>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${fs(5)}" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
-  </defs>
+  ${renderHeader(safeUser, stats, sf)}
 
   <style>
   @import url('https://fonts.googleapis.com/css2?family=Fira+Code&amp;family=JetBrains+Mono&amp;family=Roboto&amp;display=swap');
@@ -340,9 +334,9 @@ export function generateMonthlySVG(stats: MonthlyStats, params: BadgeParams): st
   }
 
   const safeUser = escapeXML(params.user || 'GitHub User');
-  const bg = `#${(params.bg || '0d1117').replace('#', '')}`;
-  const accent = `#${(params.accent || '00ffaa').replace('#', '')}`;
-  const text = `#${(params.text || 'ffffff').replace('#', '')}`;
+  const bg = `#${sanitizeHexColor(params.bg, '0d1117')}`;
+  const accent = `#${sanitizeHexColor(params.accent, '00ffaa')}`;
+  const text = `#${sanitizeHexColor(params.text, 'ffffff')}`;
 
   const sanitizeFont = (name: string) => name.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
   const sanitizedFont = params.font ? sanitizeFont(params.font) : null;
