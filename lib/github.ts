@@ -114,7 +114,7 @@ const contributionsCache = new TTLCache<ContributionCalendar>();
 const profileCache = new TTLCache<GitHubUserProfile>();
 const reposCache = new TTLCache<GitHubRepo[]>();
 
-function cacheKey(
+export function cacheKey(
   kind: 'contributions' | 'profile' | 'repos',
   username: string,
   year?: string

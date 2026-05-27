@@ -9,6 +9,7 @@ import {
   clearGitHubApiCacheForTests,
   GITHUB_CACHE_TTL_MS,
   validateGitHubUsername,
+  cacheKey,
 } from './github';
 import type { ContributionCalendar } from '../types';
 
@@ -473,5 +474,31 @@ describe('validateGitHubUsername', () => {
 
   it('returns false for consecutive hyphens', () => {
     expect(validateGitHubUsername('in--valid')).toBe(false);
+  });
+});
+
+describe('cacheKey', () => {
+  it('creates key without year', () => {
+    expect(cacheKey('profile', 'DeepSikha')).toBe('profile:deepsikha');
+  });
+
+  it('creates key with year', () => {
+    expect(cacheKey('contributions', 'DeepSikha', '2025')).toBe('contributions:deepsikha:2025');
+  });
+
+  it('converts username to lowercase', () => {
+    expect(cacheKey('repos', 'DeEpSiKhA')).toBe('repos:deepsikha');
+  });
+
+  it('supports profile kind', () => {
+    expect(cacheKey('profile', 'testuser')).toContain('profile');
+  });
+
+  it('supports repos kind', () => {
+    expect(cacheKey('repos', 'testuser')).toContain('repos');
+  });
+
+  it('supports contributions kind', () => {
+    expect(cacheKey('contributions', 'testuser')).toContain('contributions');
   });
 });
