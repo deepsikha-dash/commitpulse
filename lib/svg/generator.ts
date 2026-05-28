@@ -15,10 +15,14 @@ const FONT_MAP: Record<string, string> = {
 };
 
 // helpers
-function getSizeScale(size?: 'small' | 'medium' | 'large'): number {
+export function getSizeScale(size?: 'small' | 'medium' | 'large') {
   if (size === 'small') return 400 / SVG_WIDTH;
   if (size === 'large') return 800 / SVG_WIDTH;
-  return 1; // medium (default)
+  return 1;
+}
+
+function truncateUsername(username: string): string {
+  return username.length > 12 ? `${username.slice(0, 12)}...` : username;
 }
 
 function deterministicRandom(seed: string): number {

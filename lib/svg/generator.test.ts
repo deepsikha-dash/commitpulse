@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateSVG, generateMonthlySVG, particleCount, escapeXML } from './generator';
+import { getSizeScale } from './generator';
 import type { BadgeParams, ContributionCalendar, StreakStats, MonthlyStats } from '../../types';
 
 describe('generateSVG', () => {
@@ -532,5 +533,23 @@ describe('particleCount', () => {
   it('clamps to upper bound of 5 for high counts (e.g., 20 -> 5, 100 -> 5)', () => {
     expect(particleCount(20)).toBe(5);
     expect(particleCount(100)).toBe(5);
+  });
+});
+
+describe('getSizeScale', () => {
+  it('returns 1 for undefined', () => {
+    expect(getSizeScale()).toBe(1);
+  });
+
+  it('returns ~0.667 for small', () => {
+    expect(getSizeScale('small')).toBeCloseTo(0.667, 2);
+  });
+
+  it('returns 1 for medium', () => {
+    expect(getSizeScale('medium')).toBe(1);
+  });
+
+  it('returns ~1.333 for large', () => {
+    expect(getSizeScale('large')).toBeCloseTo(1.333, 2);
   });
 });
