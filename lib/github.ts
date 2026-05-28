@@ -122,6 +122,31 @@ function cacheKey(
   return year ? `${kind}:${username.toLowerCase()}:${year}` : `${kind}:${username.toLowerCase()}`;
 }
 
+export function computeDeveloperScore({
+  repos,
+  followers,
+  stars,
+  contributions,
+  longestStreak,
+}: {
+  repos: number;
+  followers: number;
+  stars: number;
+  contributions: number;
+  longestStreak: number;
+}): number {
+  return Math.min(
+    Math.round(
+      Math.min(repos * 0.5, 25) +
+        Math.min(followers * 0.5, 25) +
+        Math.min(stars * 0.2, 20) +
+        Math.min(contributions / 20, 20) +
+        Math.min(longestStreak * 0.2, 10)
+    ),
+    100
+  );
+}
+
 export function clearGitHubApiCacheForTests(): void {
   contributionsCache.clear();
   profileCache.clear();
@@ -401,16 +426,13 @@ export async function getFullDashboardData(username: string, options: FetchOptio
   // Stars:         up to 20 pts  (saturates at 100 total stars)
   // Contributions: up to 20 pts  (saturates at 400 yearly contributions)
   // Streak:        up to 10 pts  (saturates at a 50-day longest streak)
-  const developerScore = Math.min(
-    Math.round(
-      Math.min(profileData.public_repos * 0.5, 25) +
-        Math.min(profileData.followers * 0.5, 25) +
-        Math.min(totalStars * 0.2, 20) +
-        Math.min(streakStats.totalContributions / 20, 20) +
-        Math.min(streakStats.longestStreak * 0.2, 10)
-    ),
-    100
-  );
+  const developerScore = computeDeveloperScore({
+    repos: profileData.public_repos,
+    followers: profileData.followers,
+    stars: totalStars,
+    contributions: streakStats.totalContributions,
+    longestStreak: streakStats.longestStreak,
+  });
 
   // 1. Profile Mapping
   const profile = {

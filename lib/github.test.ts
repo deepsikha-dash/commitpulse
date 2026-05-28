@@ -9,6 +9,7 @@ import {
   clearGitHubApiCacheForTests,
   GITHUB_CACHE_TTL_MS,
   validateGitHubUsername,
+  computeDeveloperScore,
 } from './github';
 import type { ContributionCalendar } from '../types';
 
@@ -473,5 +474,90 @@ describe('validateGitHubUsername', () => {
 
   it('returns false for consecutive hyphens', () => {
     expect(validateGitHubUsername('in--valid')).toBe(false);
+  });
+});
+
+describe('computeDeveloperScore', () => {
+  it('returns 0 for all zero inputs', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 0,
+        followers: 0,
+        stars: 0,
+        contributions: 0,
+        longestStreak: 0,
+      })
+    ).toBe(0);
+  });
+
+  it('caps score at 100', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 1000,
+        followers: 1000,
+        stars: 1000,
+        contributions: 10000,
+        longestStreak: 1000,
+      })
+    ).toBe(100);
+  });
+  it('caps repos contribution at 25 points', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 100,
+        followers: 0,
+        stars: 0,
+        contributions: 0,
+        longestStreak: 0,
+      })
+    ).toBe(25);
+  });
+
+  it('caps followers contribution at 25 points', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 0,
+        followers: 100,
+        stars: 0,
+        contributions: 0,
+        longestStreak: 0,
+      })
+    ).toBe(25);
+  });
+
+  it('caps stars contribution at 20 points', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 0,
+        followers: 0,
+        stars: 100,
+        contributions: 0,
+        longestStreak: 0,
+      })
+    ).toBe(20);
+  });
+
+  it('caps contributions contribution at 20 points', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 0,
+        followers: 0,
+        stars: 0,
+        contributions: 1000,
+        longestStreak: 0,
+      })
+    ).toBe(20);
+  });
+
+  it('caps longest streak contribution at 10 points', () => {
+    expect(
+      computeDeveloperScore({
+        repos: 0,
+        followers: 0,
+        stars: 0,
+        contributions: 0,
+        longestStreak: 100,
+      })
+    ).toBe(10);
   });
 });
