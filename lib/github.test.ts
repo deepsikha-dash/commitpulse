@@ -272,7 +272,7 @@ describe('fetchGitHubContributions', () => {
         data: {
           user: {
             contributionsCollection: {
-              contributionCalendar: mockCalendar,
+              contributionCalendar: emptyCalendar,
               commitContributionsByRepository: [],
             },
           },
@@ -357,8 +357,8 @@ describe('fetchGitHubContributions', () => {
       weeks: [
         {
           contributionDays: [
-            { contributionCount: 0, date: '2024-01-01' },
-            { contributionCount: 0, date: '2024-01-02' },
+            { contributionCount: 0, date: '2023-01-01' },
+            { contributionCount: 0, date: '2023-01-02' },
           ],
         },
       ],
@@ -368,7 +368,7 @@ describe('fetchGitHubContributions', () => {
         data: {
           user: {
             contributionsCollection: {
-              contributionCalendar: mockCalendar,
+              contributionCalendar: sparseCalendar,
               commitContributionsByRepository: [],
             },
           },
@@ -583,7 +583,16 @@ describe('getFullDashboardData', () => {
           user: {
             contributionsCollection: {
               contributionCalendar: mockCalendar,
-              commitContributionsByRepository: [],
+              commitContributionsByRepository: [
+                {
+                  repository: { primaryLanguage: { name: 'TypeScript', color: '#3178c6' } },
+                  contributions: { totalCount: 100 },
+                },
+                {
+                  repository: { primaryLanguage: { name: 'Rust', color: '#dea584' } },
+                  contributions: { totalCount: 50 },
+                },
+              ],
             },
           },
         },
@@ -638,6 +647,7 @@ describe('getFullDashboardData', () => {
           user: {
             contributionsCollection: {
               contributionCalendar: intensityCalendar,
+              commitContributionsByRepository: [],
             },
           },
         },
@@ -736,6 +746,7 @@ describe('getFullDashboardData', () => {
           user: {
             contributionsCollection: {
               contributionCalendar: mockCalendar,
+              commitContributionsByRepository: [],
             },
           },
         },
