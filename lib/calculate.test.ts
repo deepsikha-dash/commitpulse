@@ -270,6 +270,84 @@ describe('calculateStreak', () => {
     expect(result.longestStreak).toBe(10);
     expect(result.currentStreak).toBe(5);
   });
+
+  it('correctly handles leap years and non-leap years during the Feb 28 to Mar 1 transition', () => {
+    // Helper to construct a ContributionCalendar with explicit dates
+    const buildCustomCalendar = (
+      daysData: { date: string; count: number }[]
+    ): ContributionCalendar => {
+      const weeks = [];
+      for (let i = 0; i < daysData.length; i += 7) {
+        const slice = daysData.slice(i, i + 7);
+        weeks.push({
+          contributionDays: slice.map((day) => ({
+            contributionCount: day.count,
+            date: day.date,
+          })),
+        });
+      }
+      return {
+        totalContributions: daysData.reduce((sum, d) => sum + d.count, 0),
+        weeks,
+      };
+    };
+
+    // --- Case 1: Non-Leap Year (2023) ---
+    // In 2023, Feb has 28 days. Feb 28 is followed directly by Mar 1.
+    const nonLeapCalendar = buildCustomCalendar([
+      { date: '2023-02-27', count: 1 },
+      { date: '2023-02-28', count: 1 },
+      { date: '2023-03-01', count: 1 },
+      { date: '2023-03-02', count: 1 },
+    ]);
+
+    // Evaluating on March 2, 2023:
+    // With commits on Feb 27, Feb 28, Mar 1, and Mar 2, the streak should be continuous (4 days).
+    const resultNonLeap = calculateStreak(nonLeapCalendar, 'UTC', new Date('2023-03-02T12:00:00Z'));
+    expect(nonLeapCalendar.totalContributions).toBe(4);
+    expect(resultNonLeap.currentStreak).toBe(4);
+    expect(resultNonLeap.longestStreak).toBe(4);
+
+    // --- Case 2: Leap Year (2024) ---
+    // In 2024, Feb has 29 days.
+    // If they commit on Feb 28, Feb 29, and Mar 1: streak should be 3.
+    const leapCalendarContinuous = buildCustomCalendar([
+      { date: '2024-02-27', count: 0 },
+      { date: '2024-02-28', count: 1 },
+      { date: '2024-02-29', count: 1 },
+      { date: '2024-03-01', count: 1 },
+    ]);
+
+    const resultLeapContinuous = calculateStreak(
+      leapCalendarContinuous,
+      'UTC',
+      new Date('2024-03-01T12:00:00Z')
+    );
+    expect(resultLeapContinuous.currentStreak).toBe(3);
+    expect(resultLeapContinuous.longestStreak).toBe(3);
+
+    // --- Case 3: Leap Year (2024) with a gap on Feb 29 ---
+    // In 2024, if they commit on Feb 28 and Mar 1 but miss Feb 29:
+    // Evaluating on Mar 1 (grace period = 1):
+    // Today (Mar 1) has 1 commit. Yesterday (Feb 29) has 0 commits.
+    // Since grace is 1, the streak is alive.
+    // However, since Feb 29 is 0, the backward count stops after today (Mar 1).
+    // So the current streak should be 1, and the longest streak should be 1.
+    const leapCalendarWithGap = buildCustomCalendar([
+      { date: '2024-02-27', count: 0 },
+      { date: '2024-02-28', count: 1 },
+      { date: '2024-02-29', count: 0 }, // Gap on leap day!
+      { date: '2024-03-01', count: 1 },
+    ]);
+
+    const resultLeapGap = calculateStreak(
+      leapCalendarWithGap,
+      'UTC',
+      new Date('2024-03-01T12:00:00Z')
+    );
+    expect(resultLeapGap.currentStreak).toBe(1);
+    expect(resultLeapGap.longestStreak).toBe(1);
+  });
 });
 it('handles massive single-day commit spike timeline', () => {
   const calendar = buildCalendar([
