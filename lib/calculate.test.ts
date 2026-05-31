@@ -160,6 +160,31 @@ describe('calculateStreak', () => {
     expect(result.totalContributions).toBe(13);
   });
 
+  it('counts weekday-only commits from Monday through Friday without spanning weekend gaps', () => {
+    // 2024-01-01 is a Monday. Commits happen only on weekdays across two work weeks.
+    const calendar = buildCalendar([
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0, // Mon-Fri active, Sat-Sun inactive
+      1,
+      1,
+      1,
+      1,
+      1, // Mon-Fri active again, ending on Friday
+    ]);
+
+    const result = calculateStreak(calendar, 'UTC', new Date('2024-01-12T12:00:00Z'));
+
+    expect(result.currentStreak).toBe(5);
+    expect(result.longestStreak).toBe(5);
+    expect(result.totalContributions).toBe(10);
+    expect(result.todayDate).toBe('2024-01-12');
+  });
+
   it('keeps the streak alive via the grace period when only yesterday has contributions', () => {
     // Today is 0, but yesterday is 1 — the grace period treats the streak as still active.
     const calendar = buildCalendar([
