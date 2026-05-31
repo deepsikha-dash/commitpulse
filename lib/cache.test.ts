@@ -443,6 +443,51 @@ describe('TTLCache', () => {
       cache.destroy();
     });
 
+    it('preserves Date instance with current timestamp (new Date())', () => {
+      const cache = new TTLCache<Date>();
+
+      const now = new Date();
+
+      cache.set('current-date', now, 60_000);
+
+      const cached = cache.get('current-date');
+
+      expect(cached).toBeInstanceOf(Date);
+      expect(cached?.getTime()).toBe(now.getTime());
+      expect(cached?.toISOString()).toBe(now.toISOString());
+
+      cache.destroy();
+    });
+
+    it('preserves Date instance nested in object with mixed types', () => {
+      const cache = new TTLCache<{
+        id: number;
+        name: string;
+        created: Date;
+        isActive: boolean;
+      }>();
+
+      const created = new Date('2024-03-15T10:30:45.123Z');
+      const data = {
+        id: 42,
+        name: 'Test Event',
+        created: created,
+        isActive: true,
+      };
+
+      cache.set('event', data, 60_000);
+
+      const cached = cache.get('event');
+
+      expect(cached?.id).toBe(42);
+      expect(cached?.name).toBe('Test Event');
+      expect(cached?.isActive).toBe(true);
+      expect(cached?.created).toBeInstanceOf(Date);
+      expect(cached?.created.toISOString()).toBe(created.toISOString());
+
+      cache.destroy();
+    });
+
     it('stores and retrieves nested object values', () => {
       const cache = new TTLCache<{
         user: { id: number; name: string };
