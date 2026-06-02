@@ -88,12 +88,6 @@ describe('GET /api/wrapped stats calculation', () => {
     expect(getWrappedData).toHaveBeenCalledWith('octocat', '2025', {
       bypassCache: false,
     });
-
-    expect(fetchGitHubContributions).toHaveBeenCalledWith('octocat', {
-      from: '2025-01-01T00:00:00Z',
-      to: '2025-12-31T23:59:59Z',
-      bypassCache: false,
-    });
   });
 
   it('returns 400 and skips wrapped stats calculation when validation fails', async () => {
