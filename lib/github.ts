@@ -322,6 +322,8 @@ function getGraphQLErrorMessage(errors: unknown): string {
 
 type FetchOptions = {
   bypassCache?: boolean;
+  // Skip the cache read but still write the fresh result back (used by background refresh).
+  forceRefresh?: boolean;
   from?: string;
   to?: string;
   rangeLabel?: string;
@@ -523,7 +525,7 @@ export async function fetchGitHubContributions(
     return fetchContributionsUncached(username, key, options, cached);
   };
 
-  if (options.bypassCache) {
+  if (options.bypassCache || options.forceRefresh) {
     try {
       return await load(null);
     } catch (err: unknown) {
@@ -737,7 +739,7 @@ export async function fetchUserProfile(
     return fetchProfileUncached(encodedUsername, key, options);
   };
 
-  if (options.bypassCache) return load();
+  if (options.bypassCache || options.forceRefresh) return load();
   return profileCache.getOrSet(key, load, GITHUB_CACHE_TTL_MS);
 }
 
@@ -781,7 +783,7 @@ export async function fetchUserRepos(
     return fetchReposUncached(encodedUsername, key, options);
   };
 
-  if (options.bypassCache) return load();
+  if (options.bypassCache || options.forceRefresh) return load();
   return reposCache.getOrSet(key, load, GITHUB_CACHE_TTL_MS);
 }
 
@@ -1169,6 +1171,11 @@ export async function fetchContributedRepos(
   };
 
   if (options.bypassCache) return load();
+  if (options.forceRefresh) {
+    const fresh = await load();
+    await contributedReposCache.set(key, fresh, GITHUB_CACHE_TTL_MS);
+    return fresh;
+  }
   return contributedReposCache.getOrSet(key, load, GITHUB_CACHE_TTL_MS);
 }
 

@@ -844,6 +844,62 @@ describe('fetchContributedRepos', () => {
   });
 });
 
+describe('forceRefresh write-back', () => {
+  beforeEach(() => vi.spyOn(global, 'fetch'));
+  afterEach(() => vi.restoreAllMocks());
+
+  it('fetchGitHubContributions: forceRefresh writes back so a later normal read is a cache hit', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse({
+        data: { user: { contributionsCollection: { contributionCalendar: mockCalendar } } },
+      })
+    );
+
+    await fetchGitHubContributions('octocat', { forceRefresh: true });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    const result = await fetchGitHubContributions('octocat');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result.calendar.totalContributions).toBe(mockCalendar.totalContributions);
+  });
+
+  it('fetchUserProfile: forceRefresh writes back so a later normal read is a cache hit', async () => {
+    const profile = {
+      login: 'octocat',
+      name: 'Octo',
+      avatar_url: '',
+      public_repos: 1,
+      followers: 1,
+      following: 1,
+      created_at: '2020-01-01T00:00:00Z',
+      bio: null,
+      location: null,
+    };
+    vi.mocked(fetch).mockResolvedValue(mockResponse(profile));
+
+    await fetchUserProfile('octocat', { forceRefresh: true });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    const result = await fetchUserProfile('octocat');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result.login).toBe('octocat');
+  });
+
+  it('fetchContributedRepos: forceRefresh writes back so a later normal read is a cache hit', async () => {
+    const nodes = [{ name: 'r1', nameWithOwner: 'o/r1' }];
+    vi.mocked(fetch).mockResolvedValue(
+      mockResponse({ data: { user: { repositoriesContributedTo: { nodes } } } })
+    );
+
+    await fetchContributedRepos('octocat', { forceRefresh: true });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    const result = await fetchContributedRepos('octocat');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(nodes);
+  });
+});
+
 describe('computeDeveloperScore', () => {
   it('returns 0 for a brand new account with no activity', () => {
     expect(
