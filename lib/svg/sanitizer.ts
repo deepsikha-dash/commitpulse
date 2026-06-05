@@ -157,7 +157,7 @@ export function parseGradientStops(input?: string): string[] {
   const colors = input
     .split(',')
     .map((color) => normalizeHexColor(color))
-    .filter((color) => color !== null) 
+    .filter((color) => color !== null)
     .slice(0, 10) as string[];
 
   return colors;

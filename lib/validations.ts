@@ -331,7 +331,7 @@ const baseStreakParamsSchema = z.object({
   gradient_stops: z
     .string()
     .max(200, { 
-      message: 'gradient_stops cannot exceed 200 characters' 
+      message: 'gradient_stops cannot exceed 200 characters',
     })
     .optional(),
   gradient_dir: z
