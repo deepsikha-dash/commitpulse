@@ -80,20 +80,10 @@ export default function ShareSheet({ username, isOpen, onClose, exportData }: Sh
   const handleDownloadSTL = async () => {
     setLocalOptionState('stl', 'loading');
     try {
-      // Simulate STL processing time
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      // Basic STL placeholder generation (A true 3D generator would iterate over the calendar)
-      const stlContent = `solid commitpulse_monolith
-  facet normal 0 0 1
-    outer loop
-      vertex 0 0 0
-      vertex 10 0 0
-      vertex 10 10 0
-    endloop
-  endfacet
-endsolid commitpulse_monolith`;
-
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const activity = exportData.activity ?? [];
+      const towers = activityToTowers(activity);
+      const stlContent = generateMonolithSTL(towers);
       const blob = new Blob([stlContent], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -101,7 +91,6 @@ endsolid commitpulse_monolith`;
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
-
       setLocalOptionState('stl', 'success');
       setTimeout(() => onClose(), 800);
     } catch {
