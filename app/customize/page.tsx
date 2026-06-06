@@ -233,6 +233,7 @@ function CustomizePageInner(): ReactElement {
         // while preserving the necessary layout and structural attributes our SVG requires.
         const sanitized = DOMPurify.sanitize(text, {
           USE_PROFILES: { svg: true },
+          ADD_TAGS: ['filter', 'feGaussianBlur', 'feMerge', 'feMergeNode', 'feComposite'],
           ADD_ATTR: [
             'viewBox',
             'd',
@@ -248,6 +249,15 @@ function CustomizePageInner(): ReactElement {
             'font-size',
             'font-weight',
             'fill-opacity',
+            'filter',
+            'stdDeviation',
+            'result',
+            'in',
+            'in2',
+            'operator',
+            'x',
+            'y',
+            'id',
           ],
         });
 
