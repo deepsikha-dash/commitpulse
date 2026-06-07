@@ -385,3 +385,27 @@ describe('proxy', () => {
     });
   });
 });
+
+describe('middleware.ts wiring', () => {
+  it('re-exports proxy as middleware so Next.js can invoke it', async () => {
+    const mod = await import('./middleware');
+
+    // Next.js looks for a named export called `middleware`
+    expect(typeof mod.middleware).toBe('function');
+  });
+
+  it('re-exports config so Next.js applies the route matcher', async () => {
+    const mod = await import('./middleware');
+
+    expect(mod.config).toBeDefined();
+    expect(Array.isArray(mod.config.matcher)).toBe(true);
+    expect(mod.config.matcher.length).toBeGreaterThan(0);
+  });
+
+  it('middleware is the same function as proxy', async () => {
+    const { proxy } = await import('./proxy');
+    const { middleware } = await import('./middleware');
+
+    expect(middleware).toBe(proxy);
+  });
+});
