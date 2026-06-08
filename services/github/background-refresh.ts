@@ -68,7 +68,9 @@ export class BackgroundRefresh {
    * Attempts to acquire refresh lock.
    */
   private async acquireLock(username: string): Promise<boolean> {
-    await dbConnect();
+    if (process.env.NODE_ENV !== 'test') {
+      await dbConnect();
+    }
 
     const key = this.createLockKey(username);
 
