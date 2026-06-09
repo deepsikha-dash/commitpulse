@@ -41,13 +41,13 @@ vi.mock('framer-motion', () => ({
 
 describe('RadarChart Accessibility Standards & Screen Reader Aria Compliance', () => {
   const languagesA = [
-    { name: 'TypeScript', percentage: 60 },
-    { name: 'JavaScript', percentage: 30 },
+    { name: 'TypeScript', percentage: 60, color: '#3178c6' },
+    { name: 'JavaScript', percentage: 30, color: '#f7df1e' },
   ];
 
   const languagesB = [
-    { name: 'TypeScript', percentage: 40 },
-    { name: 'Python', percentage: 50 },
+    { name: 'TypeScript', percentage: 40, color: '#3178c6' },
+    { name: 'Python', percentage: 50, color: '#3776ab' },
   ];
 
   it('inspects markup for accessible heading and descriptive chart labels', () => {
