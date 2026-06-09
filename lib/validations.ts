@@ -289,7 +289,7 @@ const baseStreakParamsSchema = z.object({
         if (!val) return true;
         return validateStrictISODate(val);
       },
-      { message: 'Invalid "from" date. Use YYYY-MM-DD format with a valid calendar date.' }
+      { message: 'Invalid "from" date format. Use ISO 8601 (e.g. 2023-01-01).' }
     ),
   to: z
     .string()
@@ -299,7 +299,7 @@ const baseStreakParamsSchema = z.object({
         if (!val) return true;
         return validateStrictISODate(val);
       },
-      { message: 'Invalid "to" date. Use YYYY-MM-DD format with a valid calendar date.' }
+      { message: 'Invalid "to" date format. Use ISO 8601 (e.g. 2023-12-31).' }
     ),
   date: z
     .string()
@@ -309,7 +309,7 @@ const baseStreakParamsSchema = z.object({
         if (!val) return true;
         return validateStrictISODate(val);
       },
-      { message: 'Invalid "date". Use YYYY-MM-DD format with a valid calendar date.' }
+      { message: 'Invalid "date" format. Use ISO 8601.' }
     ),
   refresh: z.string().optional().transform(toRefreshFlag),
   bypassCache: z.string().optional().transform(toRefreshFlag),
