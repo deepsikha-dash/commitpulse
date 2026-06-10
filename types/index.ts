@@ -178,8 +178,8 @@ export interface BadgeParams {
   /** Language/locale code for stat labels (e.g. 'en', 'fr', 'ja'). Defaults to 'en'. */
   lang?: string;
 
-  /** Badge layout variant. 'default' shows the isometric monolith; 'monthly' shows month-over-month stats; 'heatmap' shows a flat 2D contribution heatmap; 'pulse' shows a heartbeat sparkline; 'skyline' shows a city skyline. */
-  view?: 'default' | 'monthly' | 'heatmap' | 'pulse' | 'skyline';
+  /** Badge layout variant. 'default' shows the isometric monolith; 'monthly' shows month-over-month stats; 'heatmap' shows a flat 2D contribution heatmap; 'pulse' shows a heartbeat sparkline; 'skyline' shows a city skyline; 'languages' shows a 3D isometric city of top programming languages. */
+  view?: 'default' | 'monthly' | 'heatmap' | 'pulse' | 'skyline' | 'languages';
 
   /** Format for the monthly delta indicator. 'percent' shows %, 'absolute' shows raw count, 'both' shows both. */
   delta_format?: 'percent' | 'absolute' | 'both';

@@ -13,9 +13,15 @@ import {
   generateHeatmapSVG,
   generatePulseSVG,
   generateSkylineSVG,
+  generateLanguagesSVG,
 } from '@/lib/svg/generator';
 import { getSecondsUntilUTCMidnight, getSecondsUntilMidnightInTimezone } from '@/utils/time';
-import type { BadgeParams, ContributionCalendar } from '@/types';
+import type {
+  BadgeParams,
+  ContributionCalendar,
+  RepoContribution,
+  ExtendedContributionData,
+} from '@/types';
 import { themes } from '@/lib/svg/themes';
 import { streakParamsSchema } from '@/lib/validations';
 import { sanitizeHexColor, sanitizeRadius } from '@/lib/svg/sanitizer';
@@ -102,8 +108,15 @@ export async function GET(request: Request) {
       format,
       days,
       badges,
+      entrance,
     } = parseResult.data;
-    const normalizedView = view as 'default' | 'monthly' | 'heatmap' | 'pulse';
+    const normalizedView = view as
+      | 'default'
+      | 'monthly'
+      | 'heatmap'
+      | 'pulse'
+      | 'skyline'
+      | 'languages';
     const themeName = theme || 'dark';
 
     let timezone = 'UTC';
@@ -234,10 +247,12 @@ export async function GET(request: Request) {
       glow,
       animate,
       badges,
+      entrance,
     };
 
     let calendar;
     let versusCalendar;
+    let repoContributions: RepoContribution[] = [];
 
     // Fetch Organization Mega-City Data OR Single User Data
     if (org) {
@@ -247,6 +262,7 @@ export async function GET(request: Request) {
         to,
       });
       calendar = orgData.calendar;
+      repoContributions = normalizedView === 'languages' ? orgData.repoContributions || [] : [];
     } else if (user.includes(',')) {
       const users = user
         .split(',')
@@ -272,20 +288,24 @@ export async function GET(request: Request) {
             if (userData.isOfflineFallback) {
               hasOfflineFallback = true;
             }
-            return userData.calendar;
+            return userData;
           } catch (err) {
             lastError = err;
             return null;
           }
         })
       );
-      const successfulCalendars = fetchedCalendars.filter(
-        (c): c is ContributionCalendar => c !== null
+      const successfulData = fetchedCalendars.filter(
+        (d): d is ExtendedContributionData => d !== null
       );
-      if (successfulCalendars.length === 0) {
-        throw lastError || new Error('No successful calendars fetched');
+      if (successfulData.length === 0) {
+        throw lastError || new Error('No successful data fetched');
       }
-      calendar = aggregateCalendars(successfulCalendars);
+      calendar = aggregateCalendars(successfulData.map((d) => d.calendar));
+      repoContributions =
+        normalizedView === 'languages'
+          ? successfulData.flatMap((d) => d.repoContributions || [])
+          : [];
       if (hasOfflineFallback) {
         params.isOfflineFallback = true;
       }
@@ -296,6 +316,7 @@ export async function GET(request: Request) {
         to,
       });
       calendar = userData.calendar;
+      repoContributions = normalizedView === 'languages' ? userData.repoContributions || [] : [];
       if (userData.isOfflineFallback) {
         params.isOfflineFallback = true;
       }
@@ -358,14 +379,17 @@ export async function GET(request: Request) {
       const weakEtag = `W/"${etag}"`;
       const ifNoneMatch = request.headers.get('if-none-match');
 
-      if (ifNoneMatch === weakEtag || ifNoneMatch === `"${etag}"`) {
-        return new NextResponse(null, {
-          status: 304,
-          headers: {
-            'Cache-Control': cacheControl,
-            ETag: weakEtag,
-          },
-        });
+      if (ifNoneMatch) {
+        const etags = ifNoneMatch.split(',').map((e) => e.trim());
+        if (etags.includes(weakEtag) || etags.includes(`"${etag}"`)) {
+          return new NextResponse(null, {
+            status: 304,
+            headers: {
+              'Cache-Control': cacheControl,
+              ETag: weakEtag,
+            },
+          });
+        }
       }
 
       return new NextResponse(jsonPayload, {
@@ -387,6 +411,9 @@ export async function GET(request: Request) {
         getMonthlyReferenceDate(year, timezone)
       );
       svg = generateMonthlySVG(stats, params);
+    } else if (normalizedView === 'languages') {
+      const stats = calculateStreak(calendar, timezone, undefined, grace);
+      svg = generateLanguagesSVG(stats, params, repoContributions);
     } else if (normalizedView === 'heatmap') {
       const stats = calculateStreak(calendar, timezone, undefined, grace);
       svg = generateHeatmapSVG(stats, params, calendar);
@@ -395,7 +422,7 @@ export async function GET(request: Request) {
       // even though the sparkline generator will extract its own daily 30-day timeline below.
       const stats = calculateStreak(calendar, timezone, undefined, grace);
       svg = generatePulseSVG(stats, params, calendar);
-    } else if (view === 'skyline') {
+    } else if (normalizedView === 'skyline') {
       const stats = calculateStreak(calendar, timezone, undefined, grace);
       svg = generateSkylineSVG(stats, params, calendar);
     } else if (versus && versusCalendar) {
@@ -420,14 +447,17 @@ export async function GET(request: Request) {
     const weakEtag = `W/"${etag}"`;
     const ifNoneMatch = request.headers.get('if-none-match');
 
-    if (ifNoneMatch === weakEtag || ifNoneMatch === `"${etag}"`) {
-      return new NextResponse(null, {
-        status: 304,
-        headers: {
-          'Cache-Control': cacheControl,
-          ETag: weakEtag,
-        },
-      });
+    if (ifNoneMatch) {
+      const etags = ifNoneMatch.split(',').map((e) => e.trim());
+      if (etags.includes(weakEtag) || etags.includes(`"${etag}"`)) {
+        return new NextResponse(null, {
+          status: 304,
+          headers: {
+            'Cache-Control': cacheControl,
+            ETag: weakEtag,
+          },
+        });
+      }
     }
 
     return new NextResponse(svg, {
