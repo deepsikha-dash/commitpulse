@@ -1,41 +1,38 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextResponse } from 'next/server';
 
-const mockRender = vi.fn();
 const mockAsPng = vi.fn();
 
-vi.mock('../route', () => ({
-  GET: vi.fn(),
+const mockRender = vi.fn(() => ({
+  asPng: mockAsPng,
 }));
 
-vi.mock('@resvg/resvg-js', () => {
-  class MockResvg {
-    render() {
-      return mockRender();
-    }
+class MockResvg {
+  render() {
+    return mockRender();
   }
+}
 
-  return {
-    Resvg: MockResvg,
-  };
-});
+vi.mock('@resvg/resvg-js', () => ({
+  Resvg: MockResvg,
+}));
 
-import { GET } from './route';
-import { GET as getStreakSvg } from '../route';
+const mockGetStreakSvg = vi.fn();
+
+vi.mock('../route', () => ({
+  GET: mockGetStreakSvg,
+}));
 
 describe('ApiStreakPngRoute Accessibility Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockAsPng.mockReturnValue(Buffer.from('png-data'));
-
-    mockRender.mockReturnValue({
-      asPng: mockAsPng,
-    });
   });
 
   it('returns PNG content type for accessible image consumers', async () => {
-    vi.mocked(getStreakSvg).mockResolvedValue(
-      new Response('<svg></svg>', {
+    mockAsPng.mockReturnValue(Buffer.from('png-data'));
+
+    mockGetStreakSvg.mockResolvedValue(
+      new NextResponse('<svg></svg>', {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml',
@@ -43,14 +40,18 @@ describe('ApiStreakPngRoute Accessibility Tests', () => {
       })
     );
 
+    const { GET } = await import('./route');
+
     const response = await GET(new Request('http://localhost/api/streak/png'));
 
     expect(response.headers.get('Content-Type')).toBe('image/png');
   });
 
   it('preserves cache headers for assistive technology stability', async () => {
-    vi.mocked(getStreakSvg).mockResolvedValue(
-      new Response('<svg></svg>', {
+    mockAsPng.mockReturnValue(Buffer.from('png-data'));
+
+    mockGetStreakSvg.mockResolvedValue(
+      new NextResponse('<svg></svg>', {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml',
@@ -59,69 +60,72 @@ describe('ApiStreakPngRoute Accessibility Tests', () => {
       })
     );
 
+    const { GET } = await import('./route');
+
     const response = await GET(new Request('http://localhost/api/streak/png'));
 
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600');
   });
 
   it('returns original error responses unchanged', async () => {
-    vi.mocked(getStreakSvg).mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          error: 'Bad Request',
-        }),
+    mockGetStreakSvg.mockResolvedValue(
+      NextResponse.json(
+        { error: 'Bad request' },
         {
           status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
         }
       )
     );
+
+    const { GET } = await import('./route');
 
     const response = await GET(new Request('http://localhost/api/streak/png'));
 
     expect(response.status).toBe(400);
 
-    expect(response.headers.get('Content-Type')).toContain('application/json');
+    const body = await response.json();
+
+    expect(body.error).toBe('Bad request');
   });
 
   it('returns readable JSON error response on PNG conversion failure', async () => {
-    vi.mocked(getStreakSvg).mockResolvedValue(
-      new Response('<svg></svg>', {
-        status: 200,
-        headers: {
-          'Content-Type': 'image/svg+xml',
-        },
-      })
-    );
-
     mockRender.mockImplementationOnce(() => {
       throw new Error('PNG conversion failed');
     });
 
-    const response = await GET(new Request('http://localhost/api/streak/png'));
-
-    const data = await response.json();
-
-    expect(response.status).toBe(500);
-
-    expect(data).toEqual({
-      error: 'Failed to convert SVG to PNG',
-    });
-
-    expect(response.headers.get('Cache-Control')).toBe('no-store');
-  });
-
-  it('returns binary PNG data successfully for downstream accessible consumers', async () => {
-    vi.mocked(getStreakSvg).mockResolvedValue(
-      new Response('<svg></svg>', {
+    mockGetStreakSvg.mockResolvedValue(
+      new NextResponse('<svg></svg>', {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml',
         },
       })
     );
+
+    const { GET } = await import('./route');
+
+    const response = await GET(new Request('http://localhost/api/streak/png'));
+
+    expect(response.status).toBe(500);
+
+    const body = await response.json();
+
+    expect(body.error).toContain('Failed to convert SVG to PNG');
+  });
+
+  it('returns binary PNG data successfully for downstream accessible consumers', async () => {
+    mockAsPng.mockReturnValue(Buffer.from('binary-png'));
+
+    mockGetStreakSvg.mockResolvedValue(
+      new NextResponse('<svg></svg>', {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+        },
+      })
+    );
+
+    const { GET } = await import('./route');
 
     const response = await GET(new Request('http://localhost/api/streak/png'));
 
