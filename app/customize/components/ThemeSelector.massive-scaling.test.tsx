@@ -94,8 +94,8 @@ describe('ThemeSelector - Massive Data Sets and Extreme High Bounds Scaling', ()
     const onThemeChangeMock = vi.fn();
     const { container } = render(<ThemeSelector theme="dark" onThemeChange={onThemeChangeMock} />);
 
-    // Scope SVG querying to the rendered container rather than querying document globally
-    const svgElements = container.querySelectorAll('svg');
+    // Scope SVG querying to the quick presets container to avoid matching external icons like Shuffle
+    const svgElements = container.querySelectorAll('.theme-quick-presets svg');
     expect(svgElements.length).toBeGreaterThan(0);
 
     svgElements.forEach((svg) => {
